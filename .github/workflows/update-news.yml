@@ -1,0 +1,114 @@
+name: Daily IT News Update
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Jeden Tag um 07:00 Uhr Schweizer Zeit (UTC+1)
+  workflow_dispatch:       # Auch manuell auslösbar
+
+jobs:
+  update-news:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Fetch IT News via NewsAPI
+        env:
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        run: |
+          python3 << 'EOF'
+          import urllib.request
+          import json
+          import html
+          from datetime import datetime, timezone, timedelta
+
+          # Schweizer Zeit
+          tz = timezone(timedelta(hours=2))
+          now = datetime.now(tz)
+          date_str = now.strftime("%-d. %B %Y")
+          time_str = now.strftime("%H:%M")
+
+          import os
+          api_key = os.environ.get("NEWS_API_KEY", "")
+
+          def fetch_news(query, count=3):
+              url = f"https://newsapi.org/v2/everything?q={query}&language=en&sortBy=publishedAt&pageSize={count}&apiKey={api_key}"
+              try:
+                  with urllib.request.urlopen(url) as r:
+                      return json.loads(r.read())["articles"]
+              except:
+                  return []
+
+          hardware = fetch_news("CPU+GPU+hardware+chip", 3)
+          ai_news  = fetch_news("artificial+intelligence+AI", 3)
+          ml_news  = fetch_news("machine+learning+deep+learning", 3)
+
+          def card(article, tag_class, tag_label, is_highlight=False):
+              title = html.escape(article.get("title","Kein Titel")[:80])
+              desc  = html.escape((article.get("description") or "")[:200])
+              url   = article.get("url","#")
+              source= article.get("source",{}).get("name","Quelle")
+              if is_highlight:
+                  return f'''
+            <div class="card ai highlight-card">
+              <div class="hl-icon">🚀</div>
+              <div>
+                <span class="card-tag {tag_class}">{tag_label}</span>
+                <h2>{title}</h2>
+                <p>{desc}</p>
+                <a class="source-link" href="{url}" target="_blank">→ {html.escape(source)}</a>
+              </div>
+            </div>'''
+              return f'''
+            <div class="card {tag_class.replace('tag-','')}">
+              <span class="card-tag {tag_class}">{tag_label}</span>
+              <h2>{title}</h2>
+              <p>{desc}</p>
+              <a class="source-link" href="{url}" target="_blank">→ {html.escape(source)}</a>
+            </div>'''
+
+          top = hardware[0] if hardware else None
+          hw_cards = "".join(card(a,"tag-hardware","Hardware") for a in hardware[1:])
+          ai_cards = "".join(card(a,"tag-ai","AI") for a in ai_news)
+          ml_cards = "".join(card(a,"tag-ml","ML") for a in ml_news)
+          top_card = card(top,"tag-hardware","Hardware",True) if top else ""
+
+          content = open("index.html").read()
+
+          # Datum aktualisieren (wird vom JS gemacht, aber auch im Build setzen)
+          import re
+          # Top Story ersetzen
+          content = re.sub(
+              r'(<!-- TOP STORY -->.*?)(<!-- AI NEWS -->)',
+              f'<!-- TOP STORY -->\n  <div class="section-title">🔥 Top Story</div>\n  <div class="cards-grid">{top_card}\n  </div>\n\n  <!-- AI NEWS -->',
+              content, flags=re.DOTALL)
+          # AI ersetzen
+          content = re.sub(
+              r'(<!-- AI NEWS -->.*?)(<!-- MACHINE LEARNING -->)',
+              f'<!-- AI NEWS -->\n  <div class="section-title">🤖 Künstliche Intelligenz</div>\n  <div class="cards-grid">{ai_cards}\n  </div>\n\n  <!-- MACHINE LEARNING -->',
+              content, flags=re.DOTALL)
+          # ML ersetzen
+          content = re.sub(
+              r'(<!-- MACHINE LEARNING -->.*?)(<!-- HARDWARE -->)',
+              f'<!-- MACHINE LEARNING -->\n  <div class="section-title">🧠 Machine Learning</div>\n  <div class="cards-grid">{ml_cards}\n  </div>\n\n  <!-- HARDWARE -->',
+              content, flags=re.DOTALL)
+          # Hardware ersetzen
+          content = re.sub(
+              r'(<!-- HARDWARE -->.*?)(</div>\s*<div class="footer">)',
+              f'<!-- HARDWARE -->\n  <div class="section-title">🖥️ Hardware</div>\n  <div class="cards-grid">{hw_cards}\n  </div>\n\n  </div>\n  <div class="footer">',
+              content, flags=re.DOTALL)
+
+          open("index.html","w").write(content)
+          print(f"✅ News aktualisiert: {date_str} {time_str}")
+          EOF
+
+      - name: Commit & Push
+        run: |
+          git config user.name "IT News Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add index.html
+          git diff --staged --quiet || git commit -m "🤖 Daily News Update $(date +'%d.%m.%Y')"
+          git push
