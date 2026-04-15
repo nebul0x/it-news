@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IT Daily News</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d0d;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+ 
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 2rem;
+      text-align: center;
+      border-bottom: 2px solid #00d4ff33;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+ 
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #00d4ff, #7b2ff7, #00d4ff);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 3s infinite linear;
+    }
+ 
+    @keyframes shimmer {
+      0% { background-position: 0% }
+      100% { background-position: 200% }
+    }
+ 
+    header p {
+      color: #888;
+      font-size: 0.85rem;
+      margin-top: 0.4rem;
+    }
+ 
+    .date-badge {
+      display: inline-block;
+      background: #00d4ff22;
+      border: 1px solid #00d4ff55;
+      color: #00d4ff;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      margin-top: 0.6rem;
+    }
+ 
+    .container {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+ 
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #555;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #222;
+    }
+ 
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 3rem;
+    }
+ 
+    .card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+ 
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 12px 12px 0 0;
+    }
+ 
+    .card.hardware::before { background: linear-gradient(90deg, #ff6b35, #f7c59f); }
+    .card.ai::before       { background: linear-gradient(90deg, #7b2ff7, #00d4ff); }
+    .card.ml::before       { background: linear-gradient(90deg, #00c853, #69f0ae); }
+ 
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #333;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+ 
+    .card-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+ 
+    .tag-hardware { background: #ff6b3522; color: #ff6b35; }
+    .tag-ai       { background: #7b2ff722; color: #a78bfa; }
+    .tag-ml       { background: #00c85322; color: #69f0ae; }
+ 
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f0f0f0;
+      margin-bottom: 0.6rem;
+      line-height: 1.4;
+    }
+ 
+    .card p {
+      font-size: 0.875rem;
+      color: #888;
+      line-height: 1.6;
+    }
+ 
+    .card .source-link {
+      display: inline-block;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: #00d4ff;
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+ 
+    .card .source-link:hover { opacity: 1; }
+ 
+    .highlight-card {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      border-color: #00d4ff33;
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+ 
+    .highlight-card .hl-icon {
+      font-size: 2.5rem;
+      flex-shrink: 0;
+    }
+ 
+    .highlight-card h2 {
+      font-size: 1.2rem;
+    }
+ 
+    .stats-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+ 
+    .stat {
+      background: #00d4ff11;
+      border: 1px solid #00d4ff33;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+      color: #00d4ff;
+    }
+ 
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: #333;
+      font-size: 0.8rem;
+      border-top: 1px solid #1a1a1a;
+    }
+ 
+    .update-bar {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #555;
+    }
+ 
+    .update-bar .dot {
+      width: 8px; height: 8px;
+      background: #00c853;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+ 
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+ 
+<header>
+  <h1>⚡ IT Daily News</h1>
+  <p>Täglich aktualisiert · Hardware · AI · Machine Learning</p>
+  <div class="date-badge" id="date-badge">Wird geladen…</div>
+</header>
+ 
+<div class="container">
+ 
+  <div class="update-bar">
+    <span><span class="dot"></span>Aktuell · Stand heute</span>
+    <span id="update-time">Zuletzt aktualisiert: –</span>
+  </div>
+ 
+  <!-- TOP STORY -->
+  <div class="section-title">🔥 Top Story</div>
+  <div class="cards-grid">
+    <div class="card ai highlight-card">
+      <div class="hl-icon">🚀</div>
+      <div>
+        <span class="card-tag tag-hardware">Hardware</span>
+        <h2>NVIDIA Rubin: Die nächste GPU-Generation ist da</h2>
+        <p>NVIDIA hat die Vera Rubin Plattform enthüllt — mit 336 Milliarden Transistoren, 288 GB HBM4 Speicher und 22 TB/s Bandbreite. Die neue GPU liefert 50 PFLOPs NVFP4 Inferenz — 5× mehr als Blackwell. Geplante Verfügbarkeit: Q3 2026.</p>
+        <div class="stats-row">
+          <span class="stat">336 Mrd. Transistoren</span>
+          <span class="stat">288 GB HBM4</span>
+          <span class="stat">50 PFLOPs</span>
+          <span class="stat">5× schneller als Blackwell</span>
+        </div>
+        <a class="source-link" href="https://nvidianews.nvidia.com/news/rubin-platform-ai-supercomputer" target="_blank">→ nvidia.com</a>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- AI NEWS -->
+  <div class="section-title">🤖 Künstliche Intelligenz</div>
+  <div class="cards-grid">
+ 
+    <div class="card ai">
+      <span class="card-tag tag-ai">AI</span>
+      <h2>LLMs erreichen 50%+ auf komplexen Benchmarks</h2>
+      <p>Die besten Modelle wie Claude Opus 4.6 und Gemini 3.1 Pro übertreffen erstmals die 50%-Marke auf anspruchsvollen wissenschaftlichen Benchmarks. Ein Meilenstein für die Branche.</p>
+      <a class="source-link" href="https://spectrum.ieee.org/state-of-ai-index-2026" target="_blank">→ IEEE Spectrum</a>
+    </div>
+ 
+    <div class="card ai">
+      <span class="card-tag tag-ai">AI</span>
+      <h2>AMI Labs sammelt $1 Mrd. für „World Models"</h2>
+      <p>Advanced Machine Intelligence Labs, gegründet von Yann LeCun, hat $1.03 Milliarden Startkapital erhalten. Das Ziel: KI-Architekturen, die die physische Welt verstehen — als Alternative zu klassischen LLMs.</p>
+      <a class="source-link" href="https://www.crescendo.ai/news/latest-ai-news-and-updates" target="_blank">→ crescendo.ai</a>
+    </div>
+ 
+    <div class="card ai">
+      <span class="card-tag tag-ai">AI</span>
+      <h2>IBM: 2026 ist das Jahr der Physical AI</h2>
+      <p>IBM prognostiziert einen Paradigmenwechsel: Skalierung von LLMs bringt immer weniger Fortschritt. Stattdessen gewinnen Robotik und physische KI-Systeme an Bedeutung. KI soll greifbar und real nutzbar werden.</p>
+      <a class="source-link" href="https://www.ibm.com/think/news/ai-tech-trends-predictions-2026" target="_blank">→ ibm.com</a>
+    </div>
+ 
+    <div class="card ai">
+      <span class="card-tag tag-ai">AI</span>
+      <h2>Menschen schlagen KI bei komplexen Aufgaben</h2>
+      <p>Eine neue Studie in Nature zeigt: Bei wirklich komplexen, mehrstufigen wissenschaftlichen Aufgaben übertreffen menschliche Wissenschaftler die besten KI-Agenten noch deutlich. Die KI-Forschung hat noch viel Luft nach oben.</p>
+      <a class="source-link" href="https://www.nature.com/articles/d41586-026-01199-z" target="_blank">→ nature.com</a>
+    </div>
+ 
+  </div>
+ 
+  <!-- MACHINE LEARNING -->
+  <div class="section-title">🧠 Machine Learning</div>
+  <div class="cards-grid">
+ 
+    <div class="card ml">
+      <span class="card-tag tag-ml">ML</span>
+      <h2>MIT: Datenzentren mit doppelter Performance</h2>
+      <p>MIT-Forscher haben ein System entwickelt, das bei KI-Training und Bildkompression nahezu die doppelte Leistung traditioneller Ansätze erzielt — bei weniger Hardware. Weniger Strom, mehr Output.</p>
+      <a class="source-link" href="https://news.mit.edu/2026/helping-data-centers-deliver-higher-performance-less-hardware-0407" target="_blank">→ mit.edu</a>
+    </div>
+ 
+    <div class="card ml">
+      <span class="card-tag tag-ml">ML</span>
+      <h2>NVIDIA Rubin CPX: GPU für Long-Context Inferenz</h2>
+      <p>Neben der Standard-Rubin GPU hat NVIDIA die Rubin CPX vorgestellt — speziell optimiert für extrem lange Kontextfenster. Ideal für grosse Sprachmodelle, die lange Dokumente oder Code-Repositories verarbeiten.</p>
+      <a class="source-link" href="https://nvidianews.nvidia.com/news/nvidia-unveils-rubin-cpx-a-new-class-of-gpu-designed-for-massive-context-inference" target="_blank">→ nvidianews.nvidia.com</a>
+    </div>
+ 
+    <div class="card ml">
+      <span class="card-tag tag-ml">ML</span>
+      <h2>Stanford AI Index 2026: State of AI</h2>
+      <p>Der jährliche Stanford AI Index zeigt: KI-Investitionen steigen weiter, aber der Fokus verschiebt sich von reiner Modellgrösse hin zu Effizienz, Sicherheit und realen Anwendungen.</p>
+      <a class="source-link" href="https://spectrum.ieee.org/state-of-ai-index-2026" target="_blank">→ IEEE Spectrum</a>
+    </div>
+ 
+  </div>
+ 
+  <!-- HARDWARE -->
+  <div class="section-title">🖥️ Hardware</div>
+  <div class="cards-grid">
+ 
+    <div class="card hardware">
+      <span class="card-tag tag-hardware">Hardware</span>
+      <h2>NVIDIA DGX Rubin NVL8: AI-Supercomputer für Unternehmen</h2>
+      <p>Der DGX Rubin NVL8 ist NVIDIAs neuestes Komplettpaket für agentic AI in Unternehmen. 8 Rubin GPUs, optimiert für grosse Modelle und Multi-Agent-Systeme.</p>
+      <a class="source-link" href="https://www.nvidia.com/en-us/data-center/dgx-rubin-nvl8/" target="_blank">→ nvidia.com</a>
+    </div>
+ 
+    <div class="card hardware">
+      <span class="card-tag tag-hardware">Hardware</span>
+      <h2>AMD Ryzen AI 400: NPU für lokale KI-Tasks</h2>
+      <p>AMD bringt mit der Ryzen AI 400 Serie eine neue NPU-Generation für Laptops. Echtzeit-Übersetzung, Content-Erstellung und KI-Assistenten laufen direkt auf dem Gerät — ohne Cloud.</p>
+      <a class="source-link" href="https://www.artificialintelligence-news.com/" target="_blank">→ ai-news.com</a>
+    </div>
+ 
+  </div>
+ 
+</div>
+ 
+<div class="footer">
+  IT Daily News · Automatisch aktualisiert · Quellen: NVIDIA, MIT, IBM, Stanford, Nature, IEEE
+</div>
+ 
+<script>
+  // Datum anzeigen
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('date-badge').textContent =
+    now.toLocaleDateString('de-CH', options);
+  document.getElementById('update-time').textContent =
+    'Zuletzt aktualisiert: ' + now.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+</script>
+ 
+</body>
+</html>
